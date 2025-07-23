@@ -34,8 +34,9 @@
 ## 🔄 1. Update System Packages
 
 
+```bash
 sudo npm update -y
-
+```
 
 ## Step 2: Install Node.js and npm
 n8n requires Node.js to run. Install the LTS version of Node.js:
@@ -128,7 +129,7 @@ If you are unable to connect to your n8n workspace, proceed with the next steps.
 Install OpenSSL and generate SSL certificates:
 
 ```bash
-sudo yum install openssl -y
+sudo npm install openssl -y
 sudo mkdir /etc/n8n-certs
 sudo openssl req -x509 -newkey rsa:4096 -keyout /etc/n8n-certs/n8n-key.pem -out /etc/n8n-certs/n8n-cert.pem -days 365 -nodes
 ```

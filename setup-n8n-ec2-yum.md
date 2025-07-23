@@ -34,8 +34,9 @@
 ## 🔄 1. Update System Packages
 
 
+```bash
 sudo yum update -y
-
+```
 
 ## Step 2: Install Node.js and npm
 n8n requires Node.js to run. Install the LTS version of Node.js:
