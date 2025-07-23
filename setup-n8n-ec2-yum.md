@@ -36,6 +36,10 @@
 
 ```bash
 sudo yum update -y
+
+or
+
+sudo apt update && sudo apt upgrade -y
 ```
 
 ## Step 2: Install Node.js and npm
