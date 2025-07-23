@@ -141,3 +141,12 @@ Your n8n instance is now live. Start building workflows 🚀
 sudo npm install n8n -g
 pm2 restart n8n
 ```
+
+## 🔄 Add SSL
+
+```bash
+sudo apt install certbot python3-certbot-nginx -y
+
+sudo certbot --nginx -d your-domain
+
+```
