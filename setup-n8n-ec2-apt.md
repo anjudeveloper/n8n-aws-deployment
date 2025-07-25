@@ -1,108 +1,107 @@
-# 🚀 n8n Setup on EC2 (Ubuntu/Debian - APT-based Systems)
+## 🧾 Table of Contents
+1. Overview  
+2. Prerequisites  
+3. System Update  
+4. Node.js and npm Installation  
+5. Installing n8n  
+6. Running n8n  
+7. Creating a systemd Service for n8n  
+8. Securing n8n with SSL (HTTPS)  
+9. Adding Basic Auth  
+10. Final Steps  
+11. Troubleshooting  
 
-This guide walks you through installing and running [n8n](https://n8n.io) on an Ubuntu EC2 instance using APT and Node.js.
+# ✅ Setup n8n on EC2 Ubuntu with Subdomain and PM2
+
+Follow these steps to install and configure `n8n` on an **Ubuntu-based EC2 instance**, bind it to a **subdomain** like `https://n8n.example.com`, and run it using **PM2** for background process management.
+
 
 ---
 
-## 🧰 Prerequisites
+## 🔧  Prerequisites
 
-- EC2 instance running Ubuntu 20.04+ or Debian
-- SSH access with sudo privileges
-- Open ports: `5678` for n8n web UI
+- Amazon EC2 instance (Amazon Linux 2 or similar)
+- SSH access
+- Security Group with port `5678` open (for n8n access)
+- Public IP or domain
+- A domain/subdomain (e.g., `n8n.example.com`)
+- `A` record pointing `n8n.example.com` → your EC2 IP
+- `nginx` installed
+- Free SSL setup for subdomain
+
 
 ---
 
-## ⚙️ Step 1: Update System
+## 1️⃣ Update & Install Essentials
 
 ```bash
-sudo apt update && sudo apt upgrade -y
+sudo apt update -y
+sudo apt upgrade -y
+sudo apt install curl nginx unzip -y
 ```
 
 ---
 
-## 📦 Step 2: Install Node.js (v18 LTS)
+## 2️⃣ Install Node.js (v18)
 
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt install -y nodejs
-```
-
-✅ Confirm installation:
-
-```bash
 node -v
 npm -v
 ```
 
 ---
 
-## 🧪 Step 3: Install n8n
-
-```bash
-sudo npm install n8n -g
-```
-
----
-
-## 🚀 Step 4: Run n8n
-
-```bash
-n8n
-```
-
-🔗 Access the UI at: `http://<your-ec2-public-ip>:5678`
-
----
-
-## 🔐 (Optional) Step 5: Run as Background Service (PM2)
-
-Install [PM2](https://pm2.keymetrics.io/) to keep `n8n` running even after logout:
+## 3️⃣ Install PM2 Globally
 
 ```bash
 sudo npm install pm2 -g
+```
+
+---
+
+## 4️⃣ Install n8n
+
+```bash
+sudo npm install -g n8n
+```
+
+---
+
+## 5️⃣ Start n8n with PM2
+
+```bash
 pm2 start n8n
 pm2 startup
 pm2 save
 ```
 
----
-
-## 🔐 (Optional) Step 6: Secure with Basic Auth
-
-Set environment variables (recommended via `.bashrc` or `.env`):
-
+> Optional: Set environment variables:
 ```bash
-export N8N_BASIC_AUTH_ACTIVE=true
-export N8N_BASIC_AUTH_USER=admin
-export N8N_BASIC_AUTH_PASSWORD=your_secure_password
-```
-
-Then run `n8n` again:
-
-```bash
-n8n
+export N8N_PORT=5678
+export N8N_HOST=localhost
 ```
 
 ---
 
-## 🛠️ (Optional) Step 7: Setup Reverse Proxy with Nginx (for production)
+## 6️⃣ Setup Nginx Reverse Proxy
 
-To run on port 80 or 443 (with HTTPS), use Nginx:
+### 🔧 Create Config File
 
 ```bash
-sudo apt install nginx -y
+sudo nano /etc/nginx/sites-available/n8n
 ```
 
-Create a reverse proxy config for `n8n` (edit `/etc/nginx/sites-available/n8n`):
+Paste:
 
-```
+```nginx
 server {
     listen 80;
-
-    server_name your-domain.com;
+    server_name n8n.example.com;
 
     location / {
-        proxy_pass http://localhost:5678;
+        proxy_pass http://localhost:5678/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -111,42 +110,64 @@ server {
 }
 ```
 
-Enable and reload:
+> Replace `n8n.example.com` with your actual domain.
+
+### 🔗 Enable the Config
 
 ```bash
 sudo ln -s /etc/nginx/sites-available/n8n /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
+```
+
+> If already exists:
+```bash
+sudo rm /etc/nginx/sites-enabled/n8n
+sudo ln -s /etc/nginx/sites-available/n8n /etc/nginx/sites-enabled/
 ```
 
 ---
 
-## ✅ Done!
-
-Your n8n instance is now live. Start building workflows 🚀
-
----
-
-## 🧽 Troubleshooting
-
-- Use `pm2 logs` to see background logs.
-- Make sure port `5678` is open in AWS EC2 security group.
-- If `n8n` command not found: ensure npm global bin is in `$PATH` (`/usr/local/bin` or `~/.npm-global/bin`)
-
----
-
-## 🔄 Update n8n
+## 7️⃣ Restart nginx
 
 ```bash
-sudo npm install n8n -g
-pm2 restart n8n
+sudo nginx -t
+sudo systemctl restart nginx
 ```
 
-## 🔄 Add SSL
+Now visit `http://n8n.example.com` — it should load the n8n interface.
+
+---
+
+## 8️⃣ (Optional) Setup HTTPS with Let's Encrypt
 
 ```bash
 sudo apt install certbot python3-certbot-nginx -y
-
-sudo certbot --nginx -d your-domain
-
+sudo certbot --nginx -d n8n.example.com
 ```
+
+Choose `redirect` to enable HTTPS.
+
+---
+
+## ✅ Verify Everything
+
+```bash
+pm2 list
+sudo systemctl status nginx
+curl -I http://localhost:5678
+```
+
+Visit: `https://n8n.example.com`
+
+---
+
+## 🧠 Useful PM2 Commands
+
+```bash
+pm2 logs n8n
+pm2 restart n8n
+pm2 stop n8n
+```
+
+---
+
+🎉 You’re done! n8n is now live on your subdomain with HTTPS and auto-restarting via PM2.
