@@ -97,17 +97,32 @@ Paste:
 
 ```nginx
 server {
-    listen 80;
     server_name n8n.example.com;
 
     location / {
         proxy_pass http://localhost:5678/;
+         # WebSocket support
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-    }
+    }   
+
 }
+server {
+    if ($host = n8n.example.com) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+    listen 80;
+    server_name n8n.example.com;
+    return 404; # managed by Certbot
+}
+
 ```
 
 > Replace `n8n.example.com` with your actual domain.
